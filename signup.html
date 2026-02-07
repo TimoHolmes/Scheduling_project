@@ -12,7 +12,7 @@
     <title>Sign Up - Scheduling</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-orange-500 to-le-600 min-h-screen flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
         <!-- Logo/Header -->
         <div class="text-center mb-8">
@@ -26,7 +26,7 @@
         </div>
 
         <!-- Sign Up Form -->
-        <form class="space-y-5">
+        <form id="signupForm" class="space-y-5">
             <!-- Name Fields -->
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -115,5 +115,13 @@
             <a href="frontend.html" class="text-orange-500 hover:text-orange-600 font-medium">Sign in</a>
         </p>
     </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Customer signs up → goes to booking page
+            window.location.href = 'customers_time.html';
+        });
+    </script>
 </body>
 </html>
