@@ -52,33 +52,27 @@ def signup():
         cursor.close()
         conn.close()
 
-@app.route('/login', methods= ['POST'])
-def login(): 
+@app.route('/login', methods=['POST'])
+def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
 
     conn = get_db_connection()
-    # Using dictionary=True makes 'user' a dict instead of a tuple
-    cursor = conn.cursor(dictionary=True) 
-    
+    cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
     user = cursor.fetchone()
-    
     cursor.close()
     conn.close()
 
-    # Now you can use user['password'] instead of user[4]
     if user and check_password_hash(user['password'], password):
+        # We send the role back so the frontend knows where to send them
         return jsonify({
             'message': 'Login successful',
-            'user': {
-                'id': user['user_id'],
-                'firstName': user['first_name'],
-                'email': user['email']
-            }
+            'role': user['role'],
+            'firstName': user['first_name']
         }), 200
-        
+    
     return jsonify({'message': 'Invalid email or password'}), 401
 
 if __name__ == '__main__':

@@ -14,3 +14,11 @@ python backend.py
  * Serving Flask app 'backend'
  * Debug mode: on
 --------------------------------------
+
+SQL Commands:
+access my sql - mysql -u root -p 
+show databases - SHOW DATABASES;
+use <db> - USE <DB NAME>;
+show table - SHOW TABLES; 
+list table - DESCRIBE TABLE; 
+Add moms email to role - UPDATE users SET role = 'admin' WHERE email = 'mom@email.com';
