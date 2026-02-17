@@ -73,5 +73,10 @@ def login():
     
     return jsonify({'message': 'Invalid email or password'}), 401
 
+@app.route('/available-slots', methods = ['POST'])
+def available_slots(): 
+    data = request.get_json()
+    
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
