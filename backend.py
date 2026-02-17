@@ -4,6 +4,12 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
+import re
+
+def clean_phone_number(phone):
+    if not phone:
+        return None
+    return re.sub(r'[^\d+]', '', phone)
 
 app = Flask(__name__)
 
@@ -20,27 +26,28 @@ def get_db_connection():
 def signup():
     data = request.get_json()
     user_id = str(uuid.uuid4())
+    
+    # Clean the phone number before doing anything else
+    raw_phone = data.get('phoneNumber')
+    phone_number = clean_phone_number(raw_phone)
+    
     first_name = data.get('firstName')
     last_name = data.get('lastName')
     email = data.get('email')
     password = data.get('password')
-    
-    # Good practice: hash the password after checking if it exists
     hashed_password = generate_password_hash(password)
 
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "INSERT INTO users (user_id, first_name, last_name, email, password) VALUES (%s, %s, %s, %s, %s)",
-            (user_id, first_name, last_name, email, hashed_password)
+            "INSERT INTO users (user_id, first_name, last_name, email, phone_number, password) VALUES (%s, %s, %s, %s, %s, %s)",
+            (user_id, first_name, last_name, email, phone_number, hashed_password)
         )
         conn.commit()
-        # Return the user_id so the frontend can use it (e.g., for a 'Welcome' page)
-        return jsonify({'message': 'User registered successfully', 'user_id': user_id}), 201
-    except mysql.connector.Error as err:
-        # This catches things like "Duplicate entry for email"
-        return jsonify({'error': f"Database error: {err.msg}"}), 400
+        return jsonify({'message': 'User registered successfully'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
