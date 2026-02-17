@@ -114,14 +114,12 @@ def save_availability():
     try:
         # Clear existing for that date to avoid duplicates
         cursor.execute("DELETE FROM availability WHERE available_date = %s", (selected_date,))
-        
         for slot in active_slots:
             avail_id = str(uuid.uuid4())
             cursor.execute(
                 "INSERT INTO availability (availability_id, available_date, time_slot) VALUES (%s, %s, %s)",
                 (avail_id, selected_date, slot)
             )
-        
         conn.commit()
         return jsonify({'message': f'Schedule saved for {selected_date}'}), 200
     except Exception as e:
