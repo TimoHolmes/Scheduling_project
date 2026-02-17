@@ -1,11 +1,12 @@
 import uuid
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS # Add this at the top with other imports
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
 import re
+
 
 def clean_phone_number(phone):
     if not phone:
@@ -64,7 +65,6 @@ def login():
     conn.close()
 
     if user and check_password_hash(user['password'], password):
-        # We send the role back so the frontend knows where to send them
         return jsonify({
             'message': 'Login successful',
             'role': user['role'],
@@ -77,6 +77,23 @@ def login():
 def available_slots(): 
     data = request.get_json()
     
+app.route('/')
+def index():
+    # This makes the login page the "Home Page"
+    return render_template('sign_in_page.html')
+
+@app.route('/signup-page')
+def signup_page():
+    return render_template('signup_page.html')
+
+@app.route('/admin')
+def admin_page():
+    return render_template('admin_page.html')
+
+@app.route('/booking')
+def booking_page():
+    return render_template('customers_time.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
