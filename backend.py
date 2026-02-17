@@ -1,5 +1,6 @@
 import uuid
 from flask import Flask, request, jsonify
+from flask_cors import CORS # Add this at the top with other imports
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -12,15 +13,16 @@ def clean_phone_number(phone):
     return re.sub(r'[^\d+]', '', phone)
 
 app = Flask(__name__)
+CORS(app)
 
 def get_db_connection():
-    conn = mysql.connector.connect(
+    return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USERNAME"),
         password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_DATABASE")
+        database=os.getenv("DB_DATABASE"),
+        port=os.getenv("DB_PORT") # Add this line
     )
-    return conn
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -76,4 +78,4 @@ def login():
     return jsonify({'message': 'Invalid email or password'}), 401
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)
