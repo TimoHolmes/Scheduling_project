@@ -8,10 +8,11 @@
     <script>
         // GATEKEEPER: Run this before the page even renders
         const role = localStorage.getItem('userRole');
-        if (role !== 'admin') {
+        /*if (role !== 'admin') {
             alert("Access Denied: Admins Only");
-            window.location.href = 'sign_in_page.html'; // Changed from sign_in_page.html
-        }
+            window.location.href = 'sign_in_page.html';
+        }*/
+
     </script>
 </head>
 <body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen p-3 sm:p-4">
@@ -29,84 +30,106 @@
     </div>
 
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
-        <h2 id="welcomeHeader" class="text-lg sm:text-xl font-bold text-gray-800 mb-1">Set Your Weekly Availability</h2>
-        <p class="text-gray-500 text-sm mb-6">Check the 2-hour time slots you're available for each day.</p>
+        <h2 id="welcomeHeader" class="text-lg sm:text-xl font-bold text-gray-800 mb-1">Set Your Availability</h2>
+        <p class="text-gray-500 text-sm mb-6">Select a date and pick the time slots you are open for appointments.</p>
+
+        <div class="mb-6 bg-orange-50 p-4 rounded-lg border border-orange-200">
+            <label for="scheduleDate" class="block text-sm font-semibold text-gray-700 mb-2">Select Date to Schedule:</label>
+            <input type="date" id="scheduleDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+        </div>
 
         <form id="availabilityForm">
             <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                <table class="w-full text-xs sm:text-sm min-w-[480px]">
+                <table class="w-full text-xs sm:text-sm">
                     <thead>
                         <tr class="border-b-2 border-gray-200">
-                            <th class="text-left py-3 px-1 sm:px-2 text-gray-600 font-semibold">Time</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Mon</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Tue</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Wed</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Thu</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Fri</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Sat</th>
-                            <th class="py-3 px-1 sm:px-2 text-gray-600 font-semibold">Sun</th>
+                            <th class="text-left py-3 px-4 text-gray-600 font-semibold">Time Slot</th>
+                            <th class="text-center py-3 px-4 text-gray-600 font-semibold">Available?</th>
                         </tr>
                     </thead>
-                    <tbody id="slotGrid"></tbody>
+                    <tbody id="slotGrid">
+                        </tbody>
                 </table>
             </div>
-            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg mt-6">Save Availability</button>
+            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg mt-6 transition-colors duration-200">Save Availability</button>
         </form>
-        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 text-sm font-medium p-3 rounded-lg text-center">✅ Availability saved!</div>
+        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 text-sm font-medium p-3 rounded-lg text-center">✅ Availability saved for the selected date!</div>
     </div>
 
     <script>
-        // Personalize the header
         const name = localStorage.getItem('userName');
-        if (name) document.getElementById('welcomeHeader').innerText = `Welcome, ${name}! Set Your Weekly Availability`;
+        if (name) document.getElementById('welcomeHeader').innerText = `Welcome, ${name}!`;
 
         function logout() {
             localStorage.clear();
-            window.location.href = 'frontend.html';
+            window.location.href = 'sign_in_page.html';
         }
 
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
         const slots = [
+            { label: '6:00 – 8:00 AM',   key: '06-08' },
             { label: '8:00 – 10:00 AM',  key: '08-10' },
             { label: '10:00 AM – 12:00 PM', key: '10-12' },
             { label: '12:00 – 2:00 PM',  key: '12-14' },
             { label: '2:00 – 4:00 PM',   key: '14-16' },
             { label: '4:00 – 6:00 PM',   key: '16-18' },
             { label: '6:00 – 8:00 PM',   key: '18-20' },
+            { label: '8:00 – 10:00 PM',  key: '20-22' },
+            { label: '10:00 PM – 12:00 AM', key: '22-24' }
         ];
 
+        // Set default date to today
+        const dateInput = document.getElementById('scheduleDate');
+        dateInput.valueAsDate = new Date();
+
         const grid = document.getElementById('slotGrid');
+        
+        // Generate the rows
         slots.forEach(slot => {
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100 hover:bg-gray-50';
-            let cells = `<td class="py-3 px-2 font-medium text-gray-700">${slot.label}</td>`;
-            days.forEach(day => {
-                const id = `${day}_${slot.key}`;
-                cells += `<td class="py-3 px-2 text-center"><input type="checkbox" id="${id}" class="w-5 h-5 text-orange-500 rounded cursor-pointer"></td>`;
-            });
-            tr.innerHTML = cells;
+            tr.innerHTML = `
+                <td class="py-4 px-4 font-medium text-gray-700">${slot.label}</td>
+                <td class="py-4 px-4 text-center">
+                    <input type="checkbox" id="slot_${slot.key}" class="w-6 h-6 text-orange-500 rounded cursor-pointer">
+                </td>
+            `;
             grid.appendChild(tr);
         });
 
-        const saved = JSON.parse(localStorage.getItem('ownerAvailability') || '{}');
-        Object.keys(saved).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.checked = saved[id];
-        });
-
-        document.getElementById('availabilityForm').addEventListener('submit', function(e) {
+        // Function to save to backend
+        document.getElementById('availabilityForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const availability = {};
-            days.forEach(day => {
-                slots.forEach(slot => {
-                    const id = `${day}_${slot.key}`;
-                    availability[id] = document.getElementById(id).checked;
+            
+            const selectedDate = dateInput.value;
+            if (!selectedDate) {
+                alert("Please select a date first.");
+                return;
+            }
+
+            const activeSlots = slots
+                .filter(slot => document.getElementById(`slot_${slot.key}`).checked)
+                .map(slot => slot.key);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5001/save_availability', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: selectedDate,
+                        slots: activeSlots
+                    })
                 });
-            });
-            localStorage.setItem('ownerAvailability', JSON.stringify(availability));
-            const msg = document.getElementById('saveMessage');
-            msg.classList.remove('hidden');
-            setTimeout(() => msg.classList.add('hidden'), 2500);
+
+                if (response.ok) {
+                    const msg = document.getElementById('saveMessage');
+                    msg.classList.remove('hidden');
+                    setTimeout(() => msg.classList.add('hidden'), 2500);
+                } else {
+                    alert("Error saving availability.");
+                }
+            } catch (error) {
+                alert("Could not connect to backend. Is it running on port 5001?");
+            }
         });
     </script>
 </body>

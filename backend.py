@@ -21,24 +21,20 @@ def get_db_connection():
         user=os.getenv("DB_USERNAME"),
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_DATABASE"),
-        port=os.getenv("DB_PORT") # Add this line
+        port=os.getenv("DB_PORT")
     )
 
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     user_id = str(uuid.uuid4())
-    
-    # Clean the phone number before doing anything else
     raw_phone = data.get('phoneNumber')
     phone_number = clean_phone_number(raw_phone)
-    
     first_name = data.get('firstName')
     last_name = data.get('lastName')
     email = data.get('email')
     password = data.get('password')
     hashed_password = generate_password_hash(password)
-
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
