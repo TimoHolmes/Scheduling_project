@@ -100,5 +100,35 @@ def login():
     
     return jsonify({'message': 'Invalid email or password'}), 401
 
+@app.route('/save_availability', methods=['POST'])
+@jwt_required()
+def save_availability():
+    # Only users with a valid JWT can access this
+    data = request.get_json()
+    selected_date = data.get('date')
+    active_slots = data.get('slots')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Clear existing for that date to avoid duplicates
+        cursor.execute("DELETE FROM availability WHERE available_date = %s", (selected_date,))
+        
+        for slot in active_slots:
+            avail_id = str(uuid.uuid4())
+            cursor.execute(
+                "INSERT INTO availability (availability_id, available_date, time_slot) VALUES (%s, %s, %s)",
+                (avail_id, selected_date, slot)
+            )
+        
+        conn.commit()
+        return jsonify({'message': f'Schedule saved for {selected_date}'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
