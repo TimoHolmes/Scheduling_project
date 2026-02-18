@@ -32,44 +32,48 @@
     </div>
 
     <script>
-        document.getElementById('signupForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
 
-            if (password !== confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+    
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
 
-            const payload = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                email: document.getElementById('email').value,
-                phoneNumber: document.getElementById('phoneNumber').value,
-                password: password
-            };
+    if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+    }
 
-            try {
-                const response = await fetch('http://127.0.0.1:5001/signup', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+    const payload = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        email: document.getElementById('email').value,
+        phoneNumber: document.getElementById('phoneNumber').value,
+        password: password
+    };
 
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert("Account created! Now please log in.");
-                    window.location.href = 'sign_in_page.html';
-                } else {
-                    alert(result.error || "Signup failed");
-                }
-            } catch (error) {
-                alert("Could not connect to the backend. Is it running?");
-            }
+    try {
+        const response = await fetch('/signup', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
+
+        const result = await response.json();
+
+        if (response.ok) {
+    // This removes the popup and sends the user straight to the login route
+    window.location.href = '/'; 
+        } else {
+    // Keep this alert so you know if there's a real error (like a duplicate email)
+    alert(result.error || "Signup failed");
+        }   
+    
+    } catch (error) {
+        alert('Connection error. Check if backend.py is running on 5001.');
+    }
+    });
+
     </script>
 </body>
 </html>

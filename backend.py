@@ -118,26 +118,34 @@ def logout():
 @jwt_required()
 def save_availability():
     data = request.get_json()
-    selected_date = data.get('date') # Format: YYYY-MM-DD
-    active_slots = data.get('slots') # List of keys like ['08-10', '10-12']
+    selected_date = data.get('date')
+    active_slots = data.get('slots')
+    
+    # NEW: Get the admin's ID from the JWT cookie
+    current_admin_id = get_jwt_identity() 
 
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM availability WHERE available_date = %s", (selected_date,))
+        # Only clear slots for THIS admin on THIS date
+        cursor.execute(
+            "DELETE FROM availability WHERE available_date = %s AND user_id = %s", 
+            (selected_date, current_admin_id)
+        )
+        
         for slot in active_slots:
             cursor.execute(
-                "INSERT INTO availability (availability_id, available_date, time_slot) VALUES (%s, %s, %s)",
-                (str(uuid.uuid4()), selected_date, slot)
+                "INSERT INTO availability (availability_id, user_id, available_date, time_slot) VALUES (%s, %s, %s, %s)",
+                (str(uuid.uuid4()), current_admin_id, selected_date, slot)
             )
         conn.commit()
-        return jsonify({'message': 'Availability updated'}), 200
+        return jsonify({'message': 'Schedule updated successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
-
+        
 @app.route('/get_availability', methods=['GET'])
 def get_availability():
     conn = get_db_connection()
@@ -155,6 +163,8 @@ def get_availability():
     finally:
         cursor.close()
         conn.close()
+
+
 
 if __name__ == '__main__':
 
