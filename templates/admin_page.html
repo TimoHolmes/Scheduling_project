@@ -6,7 +6,6 @@
     <title>Admin - Set Availability</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Simple UI Gatekeeper
         if (localStorage.getItem('userRole') !== 'admin') {
             window.location.href = '/';
         }
@@ -24,9 +23,9 @@
         <button onclick="logout()" class="text-white hover:text-orange-200 font-medium">Sign Out</button>
     </div>
 
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
-        <h2 id="welcomeHeader" class="text-xl font-bold mb-1 text-gray-800">Set Availability</h2>
-        <p class="text-gray-500 text-sm mb-6">Choose a date to manage your open slots.</p>
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 id="welcomeHeader" class="text-xl font-bold mb-1 text-gray-800 text-center">Set Availability</h2>
+        <p class="text-gray-500 text-sm mb-6 text-center">Choose a date to manage your open slots.</p>
         
         <div class="mb-6 bg-orange-50 p-4 rounded-lg border border-orange-200">
             <label class="block text-sm font-semibold mb-2 text-gray-700">Select Date:</label>
@@ -41,12 +40,33 @@
                         <th class="text-center p-3 text-gray-600">Available?</th>
                     </tr>
                 </thead>
-                <tbody id="slotGrid">
-                    </tbody>
+                <tbody id="slotGrid"></tbody>
             </table>
             <button type="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg mt-6 hover:bg-orange-600 transition-all">Save Daily Schedule</button>
         </form>
         <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 p-4 rounded-lg text-center font-medium">✅ Schedule updated in database!</div>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            <span class="mr-2">📋</span> Upcoming Appointments
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs">
+                        <th class="py-3 px-4 text-left">Customer Name</th>
+                        <th class="py-3 px-4 text-left">Date</th>
+                        <th class="py-3 px-4 text-left">Time Slot</th>
+                    </tr>
+                </thead>
+                <tbody id="adminAppointmentsList">
+                    <tr class="border-b">
+                        <td class="py-4 px-4 text-gray-400 italic" colspan="3">No appointments booked yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -58,17 +78,15 @@
             window.location.href = '/';
         }
 
-        const slots = [
-            { label: '6:00 – 8:00 AM',   key: '06-08' },
-            { label: '8:00 – 10:00 AM',  key: '08-10' },
-            { label: '10:00 AM – 12:00 PM', key: '10-12' },
-            { label: '12:00 – 2:00 PM',  key: '12-14' },
-            { label: '2:00 – 4:00 PM',   key: '14-16' },
-            { label: '4:00 – 6:00 PM',   key: '16-18' },
-            { label: '6:00 – 8:00 PM',   key: '18-20' },
-            { label: '8:00 – 10:00 PM',  key: '20-22' },
-            { label: '10:00 PM – 12:00 AM', key: '22-24' }
-        ];
+        const slotLabels = {
+            '06-08': '6:00 – 8:00 AM',   '08-10': '8:00 – 10:00 AM',
+            '10-12': '10:00 AM – 12:00 PM', '12-14': '12:00 – 2:00 PM',
+            '14-16': '2:00 – 4:00 PM',   '16-18': '4:00 – 6:00 PM',
+            '18-20': '6:00 – 8:00 PM',   '20-22': '8:00 – 10:00 PM',
+            '22-24': '10:00 PM – 12:00 AM'
+        };
+
+        const slots = Object.keys(slotLabels).map(key => ({ label: slotLabels[key], key }));
 
         const dateInput = document.getElementById('scheduleDate');
         dateInput.valueAsDate = new Date();
@@ -88,18 +106,13 @@
 
         document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const activeSlots = slots
-                .filter(s => document.getElementById(`slot_${s.key}`).checked)
-                .map(s => s.key);
-            
+            const activeSlots = slots.filter(s => document.getElementById(`slot_${s.key}`).checked).map(s => s.key);
             try {
                 const response = await fetch('/save_availability', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // COOKIE IS ATTACHED AUTOMATICALLY BY BROWSER
                     body: JSON.stringify({ date: dateInput.value, slots: activeSlots })
                 });
-
                 if (response.ok) {
                     const msg = document.getElementById('saveMessage');
                     msg.classList.remove('hidden');

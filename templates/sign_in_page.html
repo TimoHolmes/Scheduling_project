@@ -46,8 +46,6 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // We only save role/name for UI purposes. 
-                    // The SECURITY (token) is now in a secure cookie handled by the browser.
                     localStorage.setItem('userRole', result.role);
                     localStorage.setItem('userName', result.firstName);
 

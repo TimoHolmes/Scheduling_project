@@ -156,6 +156,15 @@ def get_availability():
         cursor.close()
         conn.close()
 
+@app.route('/book_appointment', methods = ['POST'])
+@jwt_required()
+def book_appointment():
+
+'''
+//@app.route('/get_admin_appointments', methods = ['GET'])
+def get_appointments():'''
+
+
 if __name__ == '__main__':
 
     app.run(debug=True, port=5001)

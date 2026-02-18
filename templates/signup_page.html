@@ -27,53 +27,48 @@
         </form>
 
         <p class="text-center mt-6 text-sm text-gray-600">
-            Already have an account? <a href="frontend.html" class="text-orange-500 hover:text-orange-600 font-medium">Sign in</a>
+            Already have an account? <a href="/" class="text-orange-500 hover:text-orange-600 font-medium">Sign in</a>
         </p>
     </div>
 
     <script>
-
     document.getElementById('signupForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-    
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
 
-    if (password !== confirmPassword) {
-        alert("Passwords do not match!");
-        return;
-    }
+        if (password !== confirmPassword) {
+            alert("Passwords do not match!");
+            return;
+        }
 
-    const payload = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
-        password: password
-    };
+        const payload = {
+            firstName: document.getElementById('firstName').value,
+            lastName: document.getElementById('lastName').value,
+            email: document.getElementById('email').value,
+            phoneNumber: document.getElementById('phoneNumber').value,
+            password: password
+        };
 
-    try {
-        const response = await fetch('/signup', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const response = await fetch('/signup', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-        const result = await response.json();
+            const result = await response.json();
 
-        if (response.ok) {
-    // This removes the popup and sends the user straight to the login route
-    window.location.href = '/'; 
-        } else {
-    // Keep this alert so you know if there's a real error (like a duplicate email)
-    alert(result.error || "Signup failed");
-        }   
-    
-    } catch (error) {
-        alert('Connection error. Check if backend.py is running on 5001.');
-    }
+            if (response.ok) {
+                // Direct redirect, no popup
+                window.location.href = '/'; 
+            } else {
+                alert(result.error || "Signup failed");
+            }   
+        } catch (error) {
+            alert('Connection error. Check if backend.py is running on 5001.');
+        }
     });
-
     </script>
 </body>
 </html>
