@@ -1,40 +1,32 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sign in to your scheduling account to manage appointments and bookings">
-    <meta name="theme-color" content="#3B82F6">
     <title>Login - Scheduling</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen flex items-center justify-center py-8 px-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md mx-4">
-        <div class="text-center mb-6 sm:mb-8">
-            <div class="bg-orange-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-            </div>
+<body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        <div class="text-center mb-8">
             <h1 class="text-2xl font-bold text-gray-800">Welcome Back</h1>
-            <p class="text-gray-500 mt-2">Sign in to your scheduling account</p>
+            <p class="text-gray-500 mt-2">Sign in to manage appointments</p>
         </div>
 
-        <form id="loginForm" class="space-y-4 sm:space-y-6">
+        <form id="loginForm" class="space-y-6">
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="you@example.com" class="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" required>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input type="email" id="email" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
             </div>
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" class="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all" required>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                <input type="password" id="password" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
             </div>
-            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200">Sign In</button>
+            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-colors">Sign In</button>
         </form>
 
         <p class="text-center mt-6 text-sm text-gray-600">
-            Don't have an account? <a href="signup_page.html" class="text-blue-500 hover:text-blue-600 font-medium">Sign up</a>
+            Don't have an account? <a href="/signup-page" class="text-orange-500 hover:underline">Sign up</a>
         </p>
     </div>
 
@@ -45,7 +37,7 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('http://127.0.0.1:5001/login', {
+                const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -54,20 +46,21 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Save session data
+                    // We only save role/name for UI purposes. 
+                    // The SECURITY (token) is now in a secure cookie handled by the browser.
                     localStorage.setItem('userRole', result.role);
                     localStorage.setItem('userName', result.firstName);
 
                     if (result.role === 'admin') {
-                        window.location.href = 'admin_page.html';
+                        window.location.href = '/admin';
                     } else {
-                        window.location.href = 'customers_time.html';
+                        window.location.href = '/booking';
                     }
                 } else {
                     alert(result.message);
                 }
             } catch (error) {
-                alert('Connection error. Is backend.py running?');
+                alert('Connection error. Check if backend.py is running on 5001.');
             }
         });
     </script>

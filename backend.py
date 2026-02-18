@@ -2,18 +2,29 @@ import uuid
 import os
 import re
 import mysql.connector
-from flask import Flask, request, jsonify, render_template, redirect, url_for
+from flask import Flask, request, jsonify, render_template, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, 
+    get_jwt_identity, set_access_cookies, unset_jwt_cookies
+)
+
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "FALLBACK_SECRET_FOR_DEV") 
+# JWT Configuration for secure HttpOnly Cookies
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config["JWT_COOKIE_SECURE"] = False  # Set to True if using HTTPS
+app.config["JWT_COOKIE_HTTPONLY"] = True # Mitigates XSS by hiding cookie from JS
+app.config["JWT_ACCESS_COOKIE_PATH"] = "/"
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+
 jwt = JWTManager(app)
 
 def clean_phone_number(phone):
@@ -32,46 +43,41 @@ def get_db_connection():
 
 #-- PAGE ROUTES (SERVE HTML) --# 
 
-app.route('/')
+@app.route('/')
 def index():
-    # This makes the login page the "Home Page"
     return render_template('sign_in_page.html')
 
 @app.route('/signup-page')
-def signup_page():
+def signup_page_route():
     return render_template('signup_page.html')
 
 @app.route('/admin')
-@jwt_required()
 def admin_page():
+    # Page logic in admin_page.html handles the initial role check via localStorage
     return render_template('admin_page.html')
 
 @app.route('/booking')
 def booking_page():
     return render_template('customers_time.html')
-
 #-- API ROUTES (HANDLE DATA) --# 
 
 @app.route('/signup', methods=['POST'])
 def signup():
+    """Registers a new user with a hashed password and unique UUID."""
     data = request.get_json()
     user_id = str(uuid.uuid4())
-    raw_phone = data.get('phoneNumber')
-    phone_number = clean_phone_number(raw_phone)
-    first_name = data.get('firstName')
-    last_name = data.get('lastName')
-    email = data.get('email')
-    password = data.get('password')
-    hashed_password = generate_password_hash(password)
+    hashed_pw = generate_password_hash(data.get('password'))
+    phone = clean_phone_number(data.get('phoneNumber'))
+    
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute(
             "INSERT INTO users (user_id, first_name, last_name, email, phone_number, password) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, first_name, last_name, email, phone_number, hashed_password)
+            (user_id, data.get('firstName'), data.get('lastName'), data.get('email'), phone, hashed_pw)
         )
         conn.commit()
-        return jsonify({'message': 'User registered successfully'}), 201
+        return jsonify({'message': 'Registration successful'}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -80,48 +86,57 @@ def signup():
 
 @app.route('/login', methods=['POST'])
 def login():
+    """Authenticates users and sets a secure HttpOnly JWT cookie."""
     data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    cursor.execute("SELECT * FROM users WHERE email = %s", (data.get('email'),))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
-    if user and check_password_hash(user['password'], password):
+    
+    if user and check_password_hash(user['password'], data.get('password')):
+        # Create token with user ID and role claims
         access_token = create_access_token(identity=user['user_id'], additional_claims={"role": user['role']})
-        return jsonify({
-            'message': 'Login successful',
-            'token': access_token,
+        
+        # Build response and set the JWT cookie
+        resp = jsonify({
+            'login': True,
             'role': user['role'],
             'firstName': user['first_name']
-        }), 200
+        })
+        set_access_cookies(resp, access_token)
+        return resp, 200
     
     return jsonify({'message': 'Invalid email or password'}), 401
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    """Clears the JWT cookies to log the user out."""
+    resp = jsonify({'logout': True})
+    unset_jwt_cookies(resp)
+    return resp, 200
 
 @app.route('/save_availability', methods=['POST'])
 @jwt_required()
 def save_availability():
-    # Only users with a valid JWT can access this
+    """Saves admin-selected slots to the database; requires a valid JWT cookie."""
     data = request.get_json()
-    selected_date = data.get('date')
-    active_slots = data.get('slots')
+    selected_date = data.get('date') # Format: YYYY-MM-DD
+    active_slots = data.get('slots') # List of keys like ['08-10', '10-12']
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    
     try:
-        # Clear existing for that date to avoid duplicates
+        # Clear existing entries for this date to allow for clean updates
         cursor.execute("DELETE FROM availability WHERE available_date = %s", (selected_date,))
         for slot in active_slots:
-            avail_id = str(uuid.uuid4())
             cursor.execute(
                 "INSERT INTO availability (availability_id, available_date, time_slot) VALUES (%s, %s, %s)",
-                (avail_id, selected_date, slot)
+                (str(uuid.uuid4()), selected_date, slot)
             )
         conn.commit()
-        return jsonify({'message': f'Schedule saved for {selected_date}'}), 200
+        return jsonify({'message': 'Availability updated'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -129,4 +144,5 @@ def save_availability():
         conn.close()
 
 if __name__ == '__main__':
+    # Running on 5001 to prevent AirPlay conflicts on macOS
     app.run(debug=True, port=5001)

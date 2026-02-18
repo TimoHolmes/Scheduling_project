@@ -3,66 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set My Availability</title>
+    <title>Admin - Set Availability</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // GATEKEEPER: Run this before the page even renders
-        const role = localStorage.getItem('userRole');
-        /*if (role !== 'admin') {
-            alert("Access Denied: Admins Only");
-            window.location.href = 'sign_in_page.html';
-        }*/
-
+        // Simple UI Gatekeeper
+        if (localStorage.getItem('userRole') !== 'admin') {
+            window.location.href = '/';
+        }
     </script>
 </head>
-<body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen p-3 sm:p-4">
+<body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen p-4">
 
-    <div class="max-w-4xl mx-auto flex items-center justify-between mb-4 sm:mb-6 pt-2 gap-2">
-        <div class="flex items-center space-x-2 min-w-0">
-            <div class="bg-white w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center">
-                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
+    <div class="max-w-4xl mx-auto flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-2">
+            <div class="bg-white p-2 rounded-full">
+                <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </div>
-            <span class="text-white font-bold text-base sm:text-lg truncate">Admin: Set Availability</span>
+            <span class="text-white font-bold text-lg">Admin Dashboard</span>
         </div>
-        <button onclick="logout()" class="text-white hover:text-orange-200 text-sm font-medium transition-colors">Sign Out</button>
+        <button onclick="logout()" class="text-white hover:text-orange-200 font-medium">Sign Out</button>
     </div>
 
-    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
-        <h2 id="welcomeHeader" class="text-lg sm:text-xl font-bold text-gray-800 mb-1">Set Your Availability</h2>
-        <p class="text-gray-500 text-sm mb-6">Select a date and pick the time slots you are open for appointments.</p>
-
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+        <h2 id="welcomeHeader" class="text-xl font-bold mb-1 text-gray-800">Set Availability</h2>
+        <p class="text-gray-500 text-sm mb-6">Choose a date to manage your open slots.</p>
+        
         <div class="mb-6 bg-orange-50 p-4 rounded-lg border border-orange-200">
-            <label for="scheduleDate" class="block text-sm font-semibold text-gray-700 mb-2">Select Date to Schedule:</label>
-            <input type="date" id="scheduleDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all">
+            <label class="block text-sm font-semibold mb-2 text-gray-700">Select Date:</label>
+            <input type="date" id="scheduleDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
         </div>
 
         <form id="availabilityForm">
-            <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-                <table class="w-full text-xs sm:text-sm">
-                    <thead>
-                        <tr class="border-b-2 border-gray-200">
-                            <th class="text-left py-3 px-4 text-gray-600 font-semibold">Time Slot</th>
-                            <th class="text-center py-3 px-4 text-gray-600 font-semibold">Available?</th>
-                        </tr>
-                    </thead>
-                    <tbody id="slotGrid">
-                        </tbody>
-                </table>
-            </div>
-            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg mt-6 transition-colors duration-200">Save Availability</button>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b-2">
+                        <th class="text-left p-3 text-gray-600">Time Slot</th>
+                        <th class="text-center p-3 text-gray-600">Available?</th>
+                    </tr>
+                </thead>
+                <tbody id="slotGrid">
+                    </tbody>
+            </table>
+            <button type="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg mt-6 hover:bg-orange-600 transition-all">Save Daily Schedule</button>
         </form>
-        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 text-sm font-medium p-3 rounded-lg text-center">✅ Availability saved for the selected date!</div>
+        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 p-4 rounded-lg text-center font-medium">✅ Schedule updated in database!</div>
     </div>
 
     <script>
-        const name = localStorage.getItem('userName');
-        if (name) document.getElementById('welcomeHeader').innerText = `Welcome, ${name}!`;
+        document.getElementById('welcomeHeader').innerText = `Welcome, ${localStorage.getItem('userName')}!`;
 
-        function logout() {
+        async function logout() {
+            await fetch('/logout', { method: 'POST' });
             localStorage.clear();
-            window.location.href = 'sign_in_page.html';
+            window.location.href = '/';
         }
 
         const slots = [
@@ -77,47 +70,34 @@
             { label: '10:00 PM – 12:00 AM', key: '22-24' }
         ];
 
-        // Set default date to today
         const dateInput = document.getElementById('scheduleDate');
         dateInput.valueAsDate = new Date();
 
         const grid = document.getElementById('slotGrid');
-        
-        // Generate the rows
         slots.forEach(slot => {
             const tr = document.createElement('tr');
-            tr.className = 'border-b border-gray-100 hover:bg-gray-50';
+            tr.className = "border-b hover:bg-gray-50";
             tr.innerHTML = `
-                <td class="py-4 px-4 font-medium text-gray-700">${slot.label}</td>
-                <td class="py-4 px-4 text-center">
+                <td class="p-4 font-medium text-gray-700">${slot.label}</td>
+                <td class="p-4 text-center">
                     <input type="checkbox" id="slot_${slot.key}" class="w-6 h-6 text-orange-500 rounded cursor-pointer">
                 </td>
             `;
             grid.appendChild(tr);
         });
 
-        // Function to save to backend
-        document.getElementById('availabilityForm').addEventListener('submit', async function(e) {
+        document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const selectedDate = dateInput.value;
-            if (!selectedDate) {
-                alert("Please select a date first.");
-                return;
-            }
-
             const activeSlots = slots
-                .filter(slot => document.getElementById(`slot_${slot.key}`).checked)
-                .map(slot => slot.key);
-
+                .filter(s => document.getElementById(`slot_${s.key}`).checked)
+                .map(s => s.key);
+            
             try {
-                const response = await fetch('http://127.0.0.1:5001/save_availability', {
+                const response = await fetch('/save_availability', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        date: selectedDate,
-                        slots: activeSlots
-                    })
+                    // COOKIE IS ATTACHED AUTOMATICALLY BY BROWSER
+                    body: JSON.stringify({ date: dateInput.value, slots: activeSlots })
                 });
 
                 if (response.ok) {
@@ -125,10 +105,10 @@
                     msg.classList.remove('hidden');
                     setTimeout(() => msg.classList.add('hidden'), 2500);
                 } else {
-                    alert("Error saving availability.");
+                    alert("Unauthorized: Please log in again.");
                 }
-            } catch (error) {
-                alert("Could not connect to backend. Is it running on port 5001?");
+            } catch (err) {
+                alert("Connection failed.");
             }
         });
     </script>
