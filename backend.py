@@ -86,7 +86,6 @@ def signup():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Authenticates users and sets a secure HttpOnly JWT cookie."""
     data = request.get_json()
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -96,10 +95,8 @@ def login():
     conn.close()
     
     if user and check_password_hash(user['password'], data.get('password')):
-        # Create token with user ID and role claims
         access_token = create_access_token(identity=user['user_id'], additional_claims={"role": user['role']})
         
-        # Build response and set the JWT cookie
         resp = jsonify({
             'login': True,
             'role': user['role'],
@@ -120,7 +117,6 @@ def logout():
 @app.route('/save_availability', methods=['POST'])
 @jwt_required()
 def save_availability():
-    """Saves admin-selected slots to the database; requires a valid JWT cookie."""
     data = request.get_json()
     selected_date = data.get('date') # Format: YYYY-MM-DD
     active_slots = data.get('slots') # List of keys like ['08-10', '10-12']
@@ -128,7 +124,6 @@ def save_availability():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Clear existing entries for this date to allow for clean updates
         cursor.execute("DELETE FROM availability WHERE available_date = %s", (selected_date,))
         for slot in active_slots:
             cursor.execute(
@@ -143,6 +138,24 @@ def save_availability():
         cursor.close()
         conn.close()
 
+@app.route('/get_availability', methods=['GET'])
+def get_availability():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT available_date, time_slot FROM availability WHERE available_date >= CURDATE() ORDER BY available_date, time_slot")
+        rows = cursor.fetchall()
+        
+        for row in rows:
+            row['available_date'] = row['available_date'].strftime('%Y-%m-%d')
+            
+        return jsonify(rows), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 if __name__ == '__main__':
-    # Running on 5001 to prevent AirPlay conflicts on macOS
+
     app.run(debug=True, port=5001)
