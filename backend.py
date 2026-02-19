@@ -232,6 +232,35 @@ def book_appointment():
     finally:
         cursor.close()
         conn.close()
+
+@app.route('/get_user_appointments', methods=['GET'])
+@jwt_required()
+def get_user_appointments():
+    """Fetches only the logged-in user's appointments."""
+    user_id = get_jwt_identity()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Join availability to get the date and time for each appointment
+        query = """
+            SELECT a.available_date, a.time_slot 
+            FROM appointments app
+            JOIN availability a ON app.availability_id = a.availability_id
+            WHERE app.customer_id = %s
+            ORDER BY a.available_date, a.time_slot
+        """
+        cursor.execute(query, (user_id,))
+        rows = cursor.fetchall()
+        
+        for row in rows:
+            row['available_date'] = row['available_date'].strftime('%Y-%m-%d')
+            
+        return jsonify(rows), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
     
 
 if __name__ == '__main__':
