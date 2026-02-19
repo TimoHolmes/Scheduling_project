@@ -124,35 +124,39 @@
                 alert("Connection failed.");
             }
         });
-        
+
         async function fetchAdminBookings() {
     try {
         const response = await fetch('/get_admin_bookings');
         const appointments = await response.json();
-
         const tableBody = document.getElementById('adminAppointmentsList');
         
-        if (appointments.length > 0) {
-            tableBody.innerHTML = ''; // Clear the "No appointments" message
-            
-            appointments.forEach(app => {
-                const dateObj = new Date(app.available_date + 'T00:00:00');
-                const dateString = dateObj.toLocaleDateString('en-US', { 
-                    weekday: 'short', month: 'short', day: 'numeric' 
-                });
+        // 1. Clear the table completely first
+        tableBody.innerHTML = ''; 
 
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="py-4 px-4 font-medium text-gray-800">${app.first_name} ${app.last_name}</td>
-                    <td class="py-4 px-4 text-gray-600">${dateString}</td>
-                    <td class="py-4 px-4 text-gray-600 font-mono text-xs">${slotLabels[app.time_slot] || app.time_slot}</td>
-                `;
-                tableBody.appendChild(tr);
-            });
+        if (appointments.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-gray-400 italic">No appointments yet.</td></tr>';
+            return;
         }
+
+        // 2. Loop through EVERY appointment
+        appointments.forEach(app => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b hover:bg-gray-50 transition-colors";
+            
+            // Format the date for your mom's dashboard
+            const dateObj = new Date(app.available_date + 'T00:00:00');
+            const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+            tr.innerHTML = `
+                <td class="py-4 px-4 font-medium text-gray-800 capitalize">${app.first_name} ${app.last_name}</td>
+                <td class="py-4 px-4 text-gray-600">${dateStr}</td>
+                <td class="py-4 px-4 text-gray-600 font-medium">${slotLabels[app.time_slot] || app.time_slot}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
     } catch (error) {
-        console.error("Error fetching admin bookings:", error);
+        console.error("Fetch error:", error);
     }
 }
 

@@ -174,7 +174,7 @@ def get_admin_bookings():
             JOIN users u ON app.customer_id = u.user_id
             JOIN availability a ON app.availability_id = a.availability_id
             WHERE a.user_id = %s
-            ORDER BY a.available_date, a.time_slot
+            ORDER BY a.available_date ASC, a.time_slot ASC;
         """
         cursor.execute(query, (current_admin_id,))
         rows = cursor.fetchall()
