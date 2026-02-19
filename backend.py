@@ -156,14 +156,83 @@ def get_availability():
         cursor.close()
         conn.close()
 
-@app.route('/book_appointment', methods = ['POST'])
+@app.route('/get_admin_bookings', methods=['GET'])
+@jwt_required()
+def get_admin_bookings():
+    """Fetches all customer appointments for the logged-in admin."""
+    current_admin_id = get_jwt_identity()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = """
+            SELECT 
+                u.first_name, 
+                u.last_name, 
+                a.available_date, 
+                a.time_slot 
+            FROM appointments app
+            JOIN users u ON app.customer_id = u.user_id
+            JOIN availability a ON app.availability_id = a.availability_id
+            WHERE a.user_id = %s
+            ORDER BY a.available_date, a.time_slot
+        """
+        cursor.execute(query, (current_admin_id,))
+        rows = cursor.fetchall()
+
+        # Format the date objects so JavaScript can read them
+        for row in rows:
+            row['available_date'] = row['available_date'].strftime('%Y-%m-%d')
+            
+        return jsonify(rows), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/book_appointment', methods=['POST'])
 @jwt_required()
 def book_appointment():
+    data = request.get_json()
+    customer_id = get_jwt_identity()
+    selected_date = data.get('date')
+    selected_slot = data.get('slot')
 
-'''
-//@app.route('/get_admin_appointments', methods = ['GET'])
-def get_appointments():'''
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # 1. Find the unique ID for the chosen time slot
+        cursor.execute(
+            "SELECT availability_id FROM availability WHERE available_date = %s AND time_slot = %s AND is_booked = 0",
+            (selected_date, selected_slot)
+        )
+        slot_record = cursor.fetchone()
 
+        if not slot_record:
+            return jsonify({'error': 'Slot no longer available'}), 400
+
+        avail_id = slot_record['availability_id']
+        new_appointment_id = str(uuid.uuid4())
+
+        cursor.execute(
+            "INSERT INTO appointments (appointment_id, availability_id, customer_id) VALUES (%s, %s, %s)",
+            (new_appointment_id, avail_id, customer_id)
+        )
+        cursor.execute(
+            "UPDATE availability SET is_booked = 1 WHERE availability_id = %s",
+            (avail_id,)
+        )
+
+        conn.commit()
+        return jsonify({'message': 'Appointment confirmed!'}), 201
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+    
 
 if __name__ == '__main__':
 

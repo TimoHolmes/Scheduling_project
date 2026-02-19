@@ -90,23 +90,43 @@
         }
 
         async function bookSlot(date, slot, btnElement) {
-            if (confirm(`Book ${slotLabels[slot]} on ${date}?`)) {
-                // UI immediate feedback
+    const label = slotLabels[slot] || slot;
+    if (confirm(`Confirm your booking for ${label} on ${date}?`)) {
+        try {
+            const response = await fetch('/book_appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: date, slot: slot })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Now we show the purple confirmation box because the DB is updated
                 document.getElementById('myAppointmentsSection').classList.remove('hidden');
                 const list = document.getElementById('myAppointmentsList');
                 const div = document.createElement('div');
-                div.className = "bg-purple-50 border-l-4 border-purple-500 p-4 rounded shadow-sm flex justify-between items-center";
+                div.className = "bg-purple-50 border-l-4 border-purple-500 p-4 rounded shadow-sm flex justify-between items-center animate-fade-in";
                 div.innerHTML = `
                     <div>
                         <p class="font-bold text-purple-900">${new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
-                        <p class="text-sm text-purple-700">${slotLabels[slot]}</p>
+                        <p class="text-sm text-purple-700">${label}</p>
                     </div>
                     <span class="bg-purple-200 text-purple-800 text-xs font-bold px-2 py-1 rounded">CONFIRMED</span>
                 `;
                 list.appendChild(div);
+                
+                // Remove the button so they can't click it again
                 btnElement.closest('button').remove(); 
+            } else {
+                alert(result.error || "Booking failed. Someone might have just taken this slot!");
+                location.reload(); // Refresh to show updated availability
             }
+        } catch (error) {
+            alert("Connection error. Is the server running?");
         }
+    }
+}
 
         function logout() {
             localStorage.clear();

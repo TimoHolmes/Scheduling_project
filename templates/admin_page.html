@@ -124,6 +124,41 @@
                 alert("Connection failed.");
             }
         });
+        
+        async function fetchAdminBookings() {
+    try {
+        const response = await fetch('/get_admin_bookings');
+        const appointments = await response.json();
+
+        const tableBody = document.getElementById('adminAppointmentsList');
+        
+        if (appointments.length > 0) {
+            tableBody.innerHTML = ''; // Clear the "No appointments" message
+            
+            appointments.forEach(app => {
+                const dateObj = new Date(app.available_date + 'T00:00:00');
+                const dateString = dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'short', month: 'short', day: 'numeric' 
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 font-medium text-gray-800">${app.first_name} ${app.last_name}</td>
+                    <td class="py-4 px-4 text-gray-600">${dateString}</td>
+                    <td class="py-4 px-4 text-gray-600 font-mono text-xs">${slotLabels[app.time_slot] || app.time_slot}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching admin bookings:", error);
+    }
+}
+
+// Call this at the end of your script
+fetchAdminBookings();
+
     </script>
 </body>
 </html>
