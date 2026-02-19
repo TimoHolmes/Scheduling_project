@@ -145,8 +145,14 @@ def get_availability():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT available_date, time_slot FROM availability WHERE available_date >= CURDATE() ORDER BY available_date, time_slot")
-        rows = cursor.fetchall() 
+        # Only fetch slots that are NOT yet booked
+        cursor.execute("""
+            SELECT available_date, time_slot 
+            FROM availability 
+            WHERE available_date >= CURDATE() AND is_booked = 0 
+            ORDER BY available_date, time_slot
+        """)
+        rows = cursor.fetchall()
         for row in rows:
             row['available_date'] = row['available_date'].strftime('%Y-%m-%d')
         return jsonify(rows), 200
@@ -201,7 +207,7 @@ def book_appointment():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        # 1. Find the unique ID for the chosen time slot
+        # CRITICAL: We only select the ID if is_booked is still 0
         cursor.execute(
             "SELECT availability_id FROM availability WHERE available_date = %s AND time_slot = %s AND is_booked = 0",
             (selected_date, selected_slot)
@@ -209,15 +215,18 @@ def book_appointment():
         slot_record = cursor.fetchone()
 
         if not slot_record:
-            return jsonify({'error': 'Slot no longer available'}), 400
+            # This happens if someone else booked it while the user was looking at the page
+            return jsonify({'error': 'This slot was just taken! Please choose another.'}), 400
 
         avail_id = slot_record['availability_id']
-        new_appointment_id = str(uuid.uuid4())
 
+        # Create the appointment
         cursor.execute(
             "INSERT INTO appointments (appointment_id, availability_id, customer_id) VALUES (%s, %s, %s)",
-            (new_appointment_id, avail_id, customer_id)
+            (str(uuid.uuid4()), avail_id, customer_id)
         )
+
+        # Immediately mark as booked so it vanishes for everyone else
         cursor.execute(
             "UPDATE availability SET is_booked = 1 WHERE availability_id = %s",
             (avail_id,)
