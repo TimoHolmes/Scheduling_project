@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,7 +84,6 @@
         const dateInput = document.getElementById('scheduleDate');
         dateInput.valueAsDate = new Date();
 
-        // Build the initial grid
         const grid = document.getElementById('slotGrid');
         slots.forEach(slot => {
             const tr = document.createElement('tr');
@@ -100,11 +98,8 @@
             grid.appendChild(tr);
         });
 
-        // NEW: Blackout Logic
         async function updateBlackoutStatus() {
             const selectedDate = dateInput.value;
-            
-            // Reset everything first
             slots.forEach(slot => {
                 const checkbox = document.getElementById(`slot_${slot.key}`);
                 const row = document.getElementById(`row_${slot.key}`);
@@ -116,8 +111,6 @@
             try {
                 const response = await fetch('/get_availability');
                 const allAvailability = await response.json();
-                
-                // Filter for the date your mom picked
                 const existing = allAvailability.filter(a => a.available_date === selectedDate);
 
                 existing.forEach(record => {
@@ -125,7 +118,7 @@
                     const row = document.getElementById(`row_${record.time_slot}`);
                     if (checkbox) {
                         checkbox.checked = true;
-                        checkbox.disabled = true; // Lock it in
+                        checkbox.disabled = true;
                         row.classList.add('bg-gray-100', 'opacity-50');
                     }
                 });
@@ -133,16 +126,22 @@
         }
 
         dateInput.addEventListener('change', updateBlackoutStatus);
-        updateBlackoutStatus(); // Initial run
+        updateBlackoutStatus();
 
         document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Fixed logic: Filter for boxes that are checked BUT NOT already saved
             const activeSlots = slots.filter(s => {
                 const cb = document.getElementById(`slot_${s.key}`);
-                return cb.checked && !cb.disabled; // Only save NEWly checked boxes
+                return cb.checked && !cb.disabled; 
             }).map(s => s.key);
 
-            if (activeSlots.length === 0) return;
+            // Added alert so the button doesn't feel broken
+            if (activeSlots.length === 0) {
+                alert("Please select at least one NEW time slot to save.");
+                return;
+            }
 
             try {
                 const response = await fetch('/save_availability', {
@@ -153,7 +152,7 @@
                 if (response.ok) {
                     const msg = document.getElementById('saveMessage');
                     msg.classList.remove('hidden');
-                    updateBlackoutStatus(); // Refresh to lock the newly added slots
+                    await updateBlackoutStatus(); // Refresh to grey out new slots
                     setTimeout(() => msg.classList.add('hidden'), 2500);
                 }
             } catch (err) { alert("Connection failed."); }
