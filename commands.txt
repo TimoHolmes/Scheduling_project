@@ -22,3 +22,6 @@ use <db> - USE <DB NAME>;
 show table - SHOW TABLES; 
 list table - DESCRIBE TABLE; 
 Add moms email to role - UPDATE users SET role = 'admin' WHERE email = 'mom@email.com';
+
+
+lsof -ti:5001 | xargs kill -9

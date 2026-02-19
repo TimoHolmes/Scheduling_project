@@ -1,3 +1,9 @@
+I have updated your admin_page.html with the "Blackout" logic. Now, when your mom selects a date, the app will automatically check and disable any slots that are already in the database so she can't duplicate them.
+
+Updated admin_page.html
+Copy and replace your entire admin_page.html file with this code:
+
+HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,21 +21,21 @@
 
     <div class="max-w-4xl mx-auto flex items-center justify-between mb-6">
         <div class="flex items-center space-x-2">
-            <div class="bg-white p-2 rounded-full">
+            <div class="bg-white p-2 rounded-full shadow-md">
                 <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </div>
             <span class="text-white font-bold text-lg">Admin Dashboard</span>
         </div>
-        <button onclick="logout()" class="text-white hover:text-orange-200 font-medium">Sign Out</button>
+        <button onclick="logout()" class="text-white hover:text-orange-200 font-medium bg-white/10 px-4 py-2 rounded-lg transition-all">Sign Out</button>
     </div>
 
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 mb-8">
         <h2 id="welcomeHeader" class="text-xl font-bold mb-1 text-gray-800 text-center">Set Availability</h2>
-        <p class="text-gray-500 text-sm mb-6 text-center">Choose a date to manage your open slots.</p>
+        <p class="text-gray-500 text-sm mb-6 text-center">Manage open slots for your shop.</p>
         
         <div class="mb-6 bg-orange-50 p-4 rounded-lg border border-orange-200">
             <label class="block text-sm font-semibold mb-2 text-gray-700">Select Date:</label>
-            <input type="date" id="scheduleDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+            <input type="date" id="scheduleDate" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none transition-all">
         </div>
 
         <form id="availabilityForm">
@@ -42,9 +48,9 @@
                 </thead>
                 <tbody id="slotGrid"></tbody>
             </table>
-            <button type="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg mt-6 hover:bg-orange-600 transition-all">Save Daily Schedule</button>
+            <button type="submit" class="w-full bg-orange-500 text-white font-bold py-4 rounded-lg mt-6 hover:bg-orange-600 transition-all shadow-lg active:scale-95">Save Daily Schedule</button>
         </form>
-        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 p-4 rounded-lg text-center font-medium">✅ Schedule updated in database!</div>
+        <div id="saveMessage" class="hidden mt-4 bg-green-100 text-green-700 p-4 rounded-lg text-center font-medium border border-green-200">✅ Schedule updated in database!</div>
     </div>
 
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
@@ -54,7 +60,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
-                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs">
+                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
                         <th class="py-3 px-4 text-left">Customer Name</th>
                         <th class="py-3 px-4 text-left">Date</th>
                         <th class="py-3 px-4 text-left">Time Slot</th>
@@ -72,12 +78,6 @@
     <script>
         document.getElementById('welcomeHeader').innerText = `Welcome, ${localStorage.getItem('userName')}!`;
 
-        async function logout() {
-            await fetch('/logout', { method: 'POST' });
-            localStorage.clear();
-            window.location.href = '/';
-        }
-
         const slotLabels = {
             '06-08': '6:00 – 8:00 AM',   '08-10': '8:00 – 10:00 AM',
             '10-12': '10:00 AM – 12:00 PM', '12-14': '12:00 – 2:00 PM',
@@ -87,26 +87,68 @@
         };
 
         const slots = Object.keys(slotLabels).map(key => ({ label: slotLabels[key], key }));
-
         const dateInput = document.getElementById('scheduleDate');
         dateInput.valueAsDate = new Date();
 
+        // Build the initial grid
         const grid = document.getElementById('slotGrid');
         slots.forEach(slot => {
             const tr = document.createElement('tr');
-            tr.className = "border-b hover:bg-gray-50";
+            tr.id = `row_${slot.key}`;
+            tr.className = "border-b hover:bg-gray-50 transition-all";
             tr.innerHTML = `
                 <td class="p-4 font-medium text-gray-700">${slot.label}</td>
                 <td class="p-4 text-center">
-                    <input type="checkbox" id="slot_${slot.key}" class="w-6 h-6 text-orange-500 rounded cursor-pointer">
+                    <input type="checkbox" id="slot_${slot.key}" class="w-6 h-6 text-orange-500 rounded cursor-pointer accent-orange-500">
                 </td>
             `;
             grid.appendChild(tr);
         });
 
+        // NEW: Blackout Logic
+        async function updateBlackoutStatus() {
+            const selectedDate = dateInput.value;
+            
+            // Reset everything first
+            slots.forEach(slot => {
+                const checkbox = document.getElementById(`slot_${slot.key}`);
+                const row = document.getElementById(`row_${slot.key}`);
+                checkbox.checked = false;
+                checkbox.disabled = false;
+                row.classList.remove('bg-gray-100', 'opacity-50');
+            });
+
+            try {
+                const response = await fetch('/get_availability');
+                const allAvailability = await response.json();
+                
+                // Filter for the date your mom picked
+                const existing = allAvailability.filter(a => a.available_date === selectedDate);
+
+                existing.forEach(record => {
+                    const checkbox = document.getElementById(`slot_${record.time_slot}`);
+                    const row = document.getElementById(`row_${record.time_slot}`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.disabled = true; // Lock it in
+                        row.classList.add('bg-gray-100', 'opacity-50');
+                    }
+                });
+            } catch (err) { console.error("Error fetching blackout status:", err); }
+        }
+
+        dateInput.addEventListener('change', updateBlackoutStatus);
+        updateBlackoutStatus(); // Initial run
+
         document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const activeSlots = slots.filter(s => document.getElementById(`slot_${s.key}`).checked).map(s => s.key);
+            const activeSlots = slots.filter(s => {
+                const cb = document.getElementById(`slot_${s.key}`);
+                return cb.checked && !cb.disabled; // Only save NEWly checked boxes
+            }).map(s => s.key);
+
+            if (activeSlots.length === 0) return;
+
             try {
                 const response = await fetch('/save_availability', {
                     method: 'POST',
@@ -116,53 +158,47 @@
                 if (response.ok) {
                     const msg = document.getElementById('saveMessage');
                     msg.classList.remove('hidden');
+                    updateBlackoutStatus(); // Refresh to lock the newly added slots
                     setTimeout(() => msg.classList.add('hidden'), 2500);
-                } else {
-                    alert("Unauthorized: Please log in again.");
                 }
-            } catch (err) {
-                alert("Connection failed.");
-            }
+            } catch (err) { alert("Connection failed."); }
         });
 
         async function fetchAdminBookings() {
-    try {
-        const response = await fetch('/get_admin_bookings');
-        const appointments = await response.json();
-        const tableBody = document.getElementById('adminAppointmentsList');
-        
-        // 1. Clear the table completely first
-        tableBody.innerHTML = ''; 
+            try {
+                const response = await fetch('/get_admin_bookings');
+                const appointments = await response.json();
+                const tableBody = document.getElementById('adminAppointmentsList');
+                tableBody.innerHTML = ''; 
 
-        if (appointments.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-gray-400 italic">No appointments yet.</td></tr>';
-            return;
+                if (appointments.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400 italic">No appointments booked yet.</td></tr>';
+                    return;
+                }
+
+                appointments.forEach(app => {
+                    const tr = document.createElement('tr');
+                    tr.className = "border-b hover:bg-gray-50";
+                    const dateStr = new Date(app.available_date + 'T00:00:00').toLocaleDateString('en-US', { 
+                        weekday: 'short', month: 'short', day: 'numeric' 
+                    });
+                    tr.innerHTML = `
+                        <td class="py-4 px-4 font-medium text-gray-800 capitalize">${app.first_name} ${app.last_name}</td>
+                        <td class="py-4 px-4 text-gray-600">${dateStr}</td>
+                        <td class="py-4 px-4 text-gray-600 font-medium">${slotLabels[app.time_slot] || app.time_slot}</td>
+                    `;
+                    tableBody.appendChild(tr); 
+                });
+            } catch (err) { console.error("Error loading bookings:", err); }
         }
 
-        // 2. Loop through EVERY appointment
-        appointments.forEach(app => {
-            const tr = document.createElement('tr');
-            tr.className = "border-b hover:bg-gray-50 transition-colors";
-            
-            // Format the date for your mom's dashboard
-            const dateObj = new Date(app.available_date + 'T00:00:00');
-            const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        async function logout() {
+            await fetch('/logout', { method: 'POST' });
+            localStorage.clear();
+            window.location.href = '/';
+        }
 
-            tr.innerHTML = `
-                <td class="py-4 px-4 font-medium text-gray-800 capitalize">${app.first_name} ${app.last_name}</td>
-                <td class="py-4 px-4 text-gray-600">${dateStr}</td>
-                <td class="py-4 px-4 text-gray-600 font-medium">${slotLabels[app.time_slot] || app.time_slot}</td>
-            `;
-            tableBody.appendChild(tr);
-        });
-    } catch (error) {
-        console.error("Fetch error:", error);
-    }
-}
-
-// Call this at the end of your script
-fetchAdminBookings();
-
+        fetchAdminBookings();
     </script>
 </body>
 </html>

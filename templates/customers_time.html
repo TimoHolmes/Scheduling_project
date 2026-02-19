@@ -19,7 +19,7 @@
     </div>
 
     <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
-        <h2 class="text-xl font-bold text-gray-800 mb-1">Book Your Visit</h2>
+        <h2 id="bookingHeader" class="text-xl font-bold text-gray-800 mb-1">Book Your Visit</h2>
         <p class="text-gray-500 text-sm mb-6">Select a date and time from the available options below.</p>
 
         <div id="myAppointmentsSection" class="hidden mb-10 border-b pb-8">
@@ -56,38 +56,58 @@
         }
 
         function renderSlots(data) {
-            const slotList = document.getElementById('slotList');
-            slotList.innerHTML = '';
-            if (data.length === 0) {
-                document.getElementById('noSlots').classList.remove('hidden');
-                return;
-            }
+    const slotList = document.getElementById('slotList');
+    const bookingHeader = document.getElementById('bookingHeader'); // Ensure your <h2> has this ID
+    slotList.innerHTML = '';
+    
+    if (data.length === 0) {
+        document.getElementById('noSlots').classList.remove('hidden');
+        if (bookingHeader) bookingHeader.innerText = "Book Your Visit";
+        return;
+    }
 
-            const grouped = data.reduce((acc, curr) => {
-                if (!acc[curr.available_date]) acc[curr.available_date] = [];
-                acc[curr.available_date].push(curr.time_slot);
-                return acc;
-            }, {});
+    // 1. Calculate the date range for the header
+    const dates = data.map(d => d.available_date).sort();
+    const firstDateRaw = dates[0];
+    const lastDateRaw = dates[dates.length - 1];
 
-            Object.keys(grouped).forEach(date => {
-                const section = document.createElement('div');
-                const dateObj = new Date(date + 'T00:00:00');
-                const dateString = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    // Format the dates for a clean look (e.g., Feb 19 – Feb 22)
+    const firstDate = new Date(firstDateRaw + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const lastDate = new Date(lastDateRaw + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-                section.innerHTML = `
-                    <h3 class="text-lg font-bold text-orange-600 mb-3 border-b pb-1">${dateString}</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        ${grouped[date].map(slot => `
-                            <button onclick="bookSlot('${date}', '${slot}', this)" 
-                                class="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-bold py-3 px-4 rounded-lg transition-all text-sm">
-                                ${slotLabels[slot] || slot}
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
-                slotList.appendChild(section);
-            });
-        }
+    // 2. Update the header text dynamically
+    if (bookingHeader) {
+        bookingHeader.innerText = firstDate === lastDate 
+            ? `Available on ${firstDate}` 
+            : `Available from ${firstDate} – ${lastDate}`;
+    }
+
+    // 3. Group and Render as usual
+    const grouped = data.reduce((acc, curr) => {
+        if (!acc[curr.available_date]) acc[curr.available_date] = [];
+        acc[curr.available_date].push(curr.time_slot);
+        return acc;
+    }, {});
+
+    Object.keys(grouped).forEach(date => {
+        const section = document.createElement('div');
+        const dateObj = new Date(date + 'T00:00:00');
+        const dateString = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+
+        section.innerHTML = `
+            <h3 class="text-lg font-bold text-orange-600 mb-3 border-b pb-1">${dateString}</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${grouped[date].map(slot => `
+                    <button onclick="bookSlot('${date}', '${slot}', this)" 
+                        class="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-bold py-3 px-4 rounded-lg transition-all text-sm">
+                        ${slotLabels[slot] || slot}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        slotList.appendChild(section);
+    });
+}
 
         async function bookSlot(date, slot, btnElement) {
     const label = slotLabels[slot] || slot;
