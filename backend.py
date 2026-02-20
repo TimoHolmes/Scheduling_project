@@ -123,10 +123,7 @@ def save_availability():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "DELETE FROM availability WHERE available_date = %s AND user_id = %s", 
-            (selected_date, current_admin_id)
-        )
+        # We only insert the *new* slots received from the frontend
         for slot in active_slots:
             cursor.execute(
                 "INSERT INTO availability (availability_id, user_id, available_date, time_slot) VALUES (%s, %s, %s, %s)",
