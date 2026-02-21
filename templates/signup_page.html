@@ -1,74 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Scheduling</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-orange-500 to-orange-600 min-h-screen flex items-center justify-center py-8 px-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md">
+
+<body
+    class="bg-gradient-to-br from-orange-500 to-orange-600 min-h-screen flex items-center justify-center py-8 px-4 relative">
+    <!-- Language Toggle -->
+    <div class="absolute top-4 right-4 z-20">
+        <button id="langToggle"
+            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md transition-all border border-white/50 shadow-lg">
+            Español
+        </button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md relative z-10">
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Create Account</h1>
-            <p class="text-gray-500 mt-2">Sign up for your scheduling account</p>
+            <h1 id="createAccountHeader" class="text-2xl font-bold text-gray-800">Create Account</h1>
+            <p id="subHeader" class="text-gray-500 mt-2">Sign up for your scheduling account</p>
         </div>
 
         <form id="signupForm" class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input type="text" id="firstName" placeholder="First Name" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
-                <input type="text" id="lastName" placeholder="Last Name" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+                <input type="text" id="firstName" placeholder="First Name"
+                    class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+                <input type="text" id="lastName" placeholder="Last Name"
+                    class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
             </div>
-            <input type="email" id="email" placeholder="Email Address" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
-            <input type="tel" id="phoneNumber" placeholder="Phone Number" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
-            <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
-            <input type="password" id="confirmPassword" placeholder="Confirm Password" class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
-            
-            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg">Create Account</button>
+            <input type="email" id="email" placeholder="Email Address"
+                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+            <input type="tel" id="phoneNumber" placeholder="Phone Number"
+                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+            <input type="password" id="password" placeholder="Password"
+                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+            <input type="password" id="confirmPassword" placeholder="Confirm Password"
+                class="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-orange-500" required>
+
+            <button id="signUpBtn" type="submit"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg">Create
+                Account</button>
         </form>
 
-        <p class="text-center mt-6 text-sm text-gray-600">
-            Already have an account? <a href="/" class="text-orange-500 hover:text-orange-600 font-medium">Sign in</a>
+        <p id="haveAccountText" class="text-center mt-6 text-sm text-gray-600">
+            Already have an account? <a id="signInLink" href="/"
+                class="text-orange-500 hover:text-orange-600 font-medium">Sign in</a>
         </p>
     </div>
 
     <script>
-    document.getElementById('signupForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        if (password !== confirmPassword) {
-            alert("Passwords do not match!");
-            return;
-        }
-
-        const payload = {
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
-            email: document.getElementById('email').value,
-            phoneNumber: document.getElementById('phoneNumber').value,
-            password: password
+        const translations = {
+            en: {
+                title: "Sign Up - Scheduling",
+                header: "Create Account",
+                subHeader: "Sign up for your scheduling account",
+                firstName: "First Name",
+                lastName: "Last Name",
+                email: "Email Address",
+                phone: "Phone Number",
+                password: "Password",
+                confirmPassword: "Confirm Password",
+                btnText: "Create Account",
+                haveAccount: "Already have an account? ",
+                signInLink: "Sign in",
+                toggleBtn: "Español"
+            },
+            es: {
+                title: "Regístrate - Reservas",
+                header: "Crear Cuenta",
+                subHeader: "Regístrate para tu cuenta de reservas",
+                firstName: "Nombre",
+                lastName: "Apellido",
+                email: "Correo Electrónico",
+                phone: "Número de Teléfono",
+                password: "Contraseña",
+                confirmPassword: "Confirmar Contraseña",
+                btnText: "Crear Cuenta",
+                haveAccount: "¿Ya tienes una cuenta? ",
+                signInLink: "Iniciar Sesión",
+                toggleBtn: "English"
+            }
         };
 
-        try {
-            const response = await fetch('/signup', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+        function applyTranslations(lang) {
+            const t = translations[lang];
+            document.title = t.title;
+            document.getElementById('createAccountHeader').innerText = t.header;
+            document.getElementById('subHeader').innerText = t.subHeader;
+            document.getElementById('firstName').placeholder = t.firstName;
+            document.getElementById('lastName').placeholder = t.lastName;
+            document.getElementById('email').placeholder = t.email;
+            document.getElementById('phoneNumber').placeholder = t.phone;
+            document.getElementById('password').placeholder = t.password;
+            document.getElementById('confirmPassword').placeholder = t.confirmPassword;
+            document.getElementById('signUpBtn').innerText = t.btnText;
+            document.getElementById('haveAccountText').childNodes[0].nodeValue = t.haveAccount;
+            document.getElementById('signInLink').innerText = t.signInLink;
+            document.getElementById('langToggle').innerText = t.toggleBtn;
 
-            const result = await response.json();
-
-            if (response.ok) {
-                // Direct redirect, no popup
-                window.location.href = '/'; 
-            } else {
-                alert(result.error || "Signup failed");
-            }   
-        } catch (error) {
-            alert('Connection error. Check if backend.py is running on 5001.');
+            document.documentElement.lang = lang;
+            localStorage.setItem('preferredLang', lang);
         }
-    });
+
+        document.getElementById('langToggle').addEventListener('click', () => {
+            const currentLang = document.documentElement.lang === 'es' ? 'en' : 'es';
+            applyTranslations(currentLang);
+        });
+
+        const savedLang = localStorage.getItem('preferredLang') || 'en';
+        applyTranslations(savedLang);
+
+        document.getElementById('signupForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                const msg = document.documentElement.lang === 'es' ? '¡Las contraseñas no coinciden!' : 'Passwords do not match!';
+                alert(msg);
+                return;
+            }
+
+            const payload = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                password: password
+            };
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    const failMsg = document.documentElement.lang === 'es' ? 'Fallo en el registro' : "Signup failed";
+                    alert(result.error || failMsg);
+                }
+            } catch (error) {
+                const connErr = document.documentElement.lang === 'es' ? 'Error de conexión.' : 'Connection error.';
+                alert(connErr);
+            }
+        });
     </script>
 </body>
+
 </html>

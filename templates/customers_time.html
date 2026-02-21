@@ -1,30 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book an Appointment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .modal-overlay { transition: opacity 0.2s ease-out; }
-        .modal-content { transition: transform 0.2s ease-out; }
+        .modal-overlay {
+            transition: opacity 0.2s ease-out;
+        }
+
+        .modal-content {
+            transition: transform 0.2s ease-out;
+        }
     </style>
 </head>
+
 <body class="bg-gradient-to-br from-orange-500 to-purple-600 min-h-screen p-3 sm:p-4">
 
     <div id="bookingModal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4">
         <div class="absolute inset-0 bg-black bg-opacity-50 modal-overlay" onclick="closeModal()"></div>
-        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative z-10 modal-content transform scale-95 opacity-0" id="modalBox">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative z-10 modal-content transform scale-95 opacity-0"
+            id="modalBox">
             <div class="text-center">
                 <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Confirm Booking?</h3>
+                <h3 id="modalHeader" class="text-2xl font-bold text-gray-800 mb-2">Confirm Booking?</h3>
                 <p id="modalDetailText" class="text-gray-500 mb-8"></p>
-                
+
                 <div class="flex space-x-3">
-                    <button onclick="closeModal()" class="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
-                    <button onclick="executeBooking()" class="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg hover:shadow-orange-200 transition-all active:scale-95">Confirm</button>
+                    <button id="btnCancel" onclick="closeModal()"
+                        class="flex-1 px-4 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button id="btnConfirm" onclick="executeBooking()"
+                        class="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl shadow-lg hover:shadow-orange-200 transition-all active:scale-95">Confirm</button>
                 </div>
             </div>
         </div>
@@ -33,19 +47,31 @@
     <div class="max-w-2xl mx-auto flex items-center justify-between mb-6 pt-2">
         <div class="flex items-center space-x-2">
             <div class="bg-white w-10 h-10 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
             </div>
-            <span class="text-white font-bold text-lg">Available Slots</span>
+            <span id="availableSlotsTitle" class="text-white font-bold text-lg">Available Slots</span>
         </div>
-        <button onclick="logout()" class="text-white hover:text-orange-200 text-sm font-medium">Sign Out</button>
+        <div class="flex items-center space-x-4">
+            <button id="langToggle"
+                class="bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-md transition-all border border-white/50">
+                🇪🇸 Español
+            </button>
+            <button id="signOutBtn" onclick="logout()" class="text-white hover:text-orange-200 text-sm font-medium">Sign
+                Out</button>
+        </div>
     </div>
 
     <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
         <h2 id="bookingHeader" class="text-xl font-bold text-gray-800 mb-1">Book Your Visit</h2>
-        <p class="text-gray-500 text-sm mb-6">Select a date and time from the available options below.</p>
+        <p id="bookingSubHeader" class="text-gray-500 text-sm mb-6">Select a date and time from the available options
+            below.</p>
 
         <div id="myAppointmentsSection" class="hidden mb-10 border-b pb-8">
-            <h3 class="text-lg font-bold text-purple-700 mb-3 flex items-center">
+            <h3 id="myAppointmentsHeader" class="text-lg font-bold text-purple-700 mb-3 flex items-center">
                 <span class="mr-2">📅</span> Your Confirmed Appointments
             </h3>
             <div id="myAppointmentsList" class="space-y-3"></div>
@@ -53,16 +79,90 @@
 
         <div id="slotList" class="space-y-8"></div>
         <div id="noSlots" class="hidden text-center py-12">
-            <p class="text-gray-400 text-lg">No availability scheduled yet. Check back soon!</p>
+            <p id="noSlotsText" class="text-gray-400 text-lg">No availability scheduled yet. Check back soon!</p>
         </div>
     </div>
 
     <script>
+        const translations = {
+            en: {
+                title: "Book an Appointment",
+                availableSlotsTitle: "Available Slots",
+                signOutBtn: "Sign Out",
+                bookingHeader: "Book Your Visit",
+                bookingSubHeader: "Select a date and time from the available options below.",
+                myAppointmentsHeader: `<span class="mr-2">📅</span> Your Confirmed Appointments`,
+                noSlotsText: "No availability scheduled yet. Check back soon!",
+                modalHeader: "Confirm Booking?",
+                btnCancel: "Cancel",
+                btnConfirm: "Confirm",
+                confirmedBadge: "CONFIRMED",
+                toggleBtn: "🇪🇸 Español",
+                locales: "en-US",
+                modalBookingText: (label, dateStr) => `You are booking <strong>${label}</strong> on <strong>${dateStr}</strong>.`,
+                availableOn: (firstDate, lastDate) => firstDate === lastDate ? `Available on ${firstDate}` : `Available from ${firstDate} – ${lastDate}`
+            },
+            es: {
+                title: "Reservar una Cita",
+                availableSlotsTitle: "Horarios Disponibles",
+                signOutBtn: "Cerrar Sesión",
+                bookingHeader: "Reserva Tu Visita",
+                bookingSubHeader: "Selecciona una fecha y hora de las opciones abajo.",
+                myAppointmentsHeader: `<span class="mr-2">📅</span> Tus Citas Confirmadas`,
+                noSlotsText: "Sin horarios disponibles aún. ¡Vuelve pronto!",
+                modalHeader: "¿Confirmar Reserva?",
+                btnCancel: "Cancelar",
+                btnConfirm: "Confirmar",
+                confirmedBadge: "CONFIRMADO",
+                toggleBtn: "🇺🇸 English",
+                locales: "es-ES",
+                modalBookingText: (label, dateStr) => `Estás reservando el horario <strong>${label}</strong> del día <strong>${dateStr}</strong>.`,
+                availableOn: (firstDate, lastDate) => firstDate === lastDate ? `Disponible el ${firstDate}` : `Disponible desde el ${firstDate} – ${lastDate}`
+            }
+        };
+
+        function getLang() {
+            return document.documentElement.lang === 'es' ? 'es' : 'en';
+        }
+
+        function applyTranslations(lang) {
+            const t = translations[lang];
+            document.title = t.title;
+            document.getElementById('availableSlotsTitle').innerText = t.availableSlotsTitle;
+            document.getElementById('signOutBtn').innerText = t.signOutBtn;
+            if (document.getElementById('slotList').innerHTML === '') {
+                document.getElementById('bookingHeader').innerText = t.bookingHeader;
+            }
+            document.getElementById('bookingSubHeader').innerText = t.bookingSubHeader;
+            document.getElementById('myAppointmentsHeader').innerHTML = t.myAppointmentsHeader;
+            document.getElementById('noSlotsText').innerText = t.noSlotsText;
+            document.getElementById('modalHeader').innerText = t.modalHeader;
+            document.getElementById('btnCancel').innerText = t.btnCancel;
+            document.getElementById('btnConfirm').innerText = t.btnConfirm;
+            document.getElementById('langToggle').innerText = t.toggleBtn;
+
+            document.documentElement.lang = lang;
+            localStorage.setItem('preferredLang', lang);
+
+            // Re-render dynamically loaded content because language changed dates and strings
+            fetchAvailability();
+            fetchUserAppointments();
+        }
+
+        document.getElementById('langToggle').addEventListener('click', () => {
+            const currentLang = document.documentElement.lang === 'es' ? 'en' : 'es';
+            applyTranslations(currentLang);
+        });
+
+        // Initialize language
+        const savedLang = localStorage.getItem('preferredLang') || 'en';
+        document.documentElement.lang = savedLang;
+        applyTranslations(savedLang);
         const slotLabels = {
-            '06-08': '6:00 – 8:00 AM',   '08-10': '8:00 – 10:00 AM',
+            '06-08': '6:00 – 8:00 AM', '08-10': '8:00 – 10:00 AM',
             '10-12': '10:00 AM – 12:00 PM', '12-14': '12:00 – 2:00 PM',
-            '14-16': '2:00 – 4:00 PM',   '16-18': '4:00 – 6:00 PM',
-            '18-20': '6:00 – 8:00 PM',   '20-22': '8:00 – 10:00 PM',
+            '14-16': '2:00 – 4:00 PM', '16-18': '4:00 – 6:00 PM',
+            '18-20': '6:00 – 8:00 PM', '20-22': '8:00 – 10:00 PM',
             '22-24': '10:00 PM – 12:00 AM'
         };
 
@@ -78,13 +178,14 @@
 
                 if (appointments.length > 0) {
                     section.classList.remove('hidden');
-                    list.innerHTML = ''; 
+                    list.innerHTML = '';
                     appointments.forEach(app => {
+                        const t = translations[getLang()];
                         const dateObj = new Date(app.available_date + 'T00:00:00');
-                        const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                        const dateStr = dateObj.toLocaleDateString(t.locales, { weekday: 'long', month: 'short', day: 'numeric' });
                         const div = document.createElement('div');
                         div.className = "bg-purple-50 border-l-4 border-purple-500 p-4 rounded shadow-sm flex justify-between items-center mb-3";
-                        div.innerHTML = `<div><p class="font-bold text-purple-900">${dateStr}</p><p class="text-sm text-purple-700">${slotLabels[app.time_slot] || app.time_slot}</p></div><span class="bg-purple-200 text-purple-800 text-xs font-bold px-2 py-1 rounded">CONFIRMED</span>`;
+                        div.innerHTML = `<div><p class="font-bold text-purple-900 capitalize">${dateStr}</p><p class="text-sm text-purple-700">${slotLabels[app.time_slot] || app.time_slot}</p></div><span class="bg-purple-200 text-purple-800 text-xs font-bold px-2 py-1 rounded">${t.confirmedBadge}</span>`;
                         list.appendChild(div);
                     });
                 } else { section.classList.add('hidden'); }
@@ -105,13 +206,14 @@
             slotList.innerHTML = '';
             if (data.length === 0) {
                 document.getElementById('noSlots').classList.remove('hidden');
-                if (bookingHeader) bookingHeader.innerText = "Book Your Visit";
+                if (bookingHeader) bookingHeader.innerText = translations[getLang()].bookingHeader;
                 return;
             }
+            const t = translations[getLang()];
             const dates = data.map(d => d.available_date).sort();
-            const firstDate = new Date(dates[0] + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const lastDate = new Date(dates[dates.length - 1] + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            if (bookingHeader) bookingHeader.innerText = firstDate === lastDate ? `Available on ${firstDate}` : `Available from ${firstDate} – ${lastDate}`;
+            const firstDate = new Date(dates[0] + 'T00:00:00').toLocaleDateString(t.locales, { month: 'short', day: 'numeric' });
+            const lastDate = new Date(dates[dates.length - 1] + 'T00:00:00').toLocaleDateString(t.locales, { month: 'short', day: 'numeric' });
+            if (bookingHeader) bookingHeader.innerText = t.availableOn(firstDate, lastDate);
 
             const grouped = data.reduce((acc, curr) => {
                 if (!acc[curr.available_date]) acc[curr.available_date] = [];
@@ -122,9 +224,9 @@
             Object.keys(grouped).forEach(date => {
                 const section = document.createElement('div');
                 const dateObj = new Date(date + 'T00:00:00');
-                const dateString = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                const dateString = dateObj.toLocaleDateString(t.locales, { weekday: 'long', month: 'short', day: 'numeric' });
                 section.innerHTML = `
-                    <h3 class="text-lg font-bold text-orange-600 mb-3 border-b pb-1">${dateString}</h3>
+                    <h3 class="text-lg font-bold text-orange-600 mb-3 border-b pb-1 capitalize">${dateString}</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         ${grouped[date].map(slot => `<button onclick="bookSlot('${date}', '${slot}', this)" class="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-bold py-3 px-4 rounded-lg transition-all text-sm">${slotLabels[slot] || slot}</button>`).join('')}
                     </div>
@@ -136,14 +238,15 @@
         // --- NEW CUSTOM MODAL FUNCTIONS ---
 
         function bookSlot(date, slot, btnElement) {
+            const t = translations[getLang()];
             const label = slotLabels[slot] || slot;
-            const dateStr = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-            
+            const dateStr = new Date(date + 'T00:00:00').toLocaleDateString(t.locales, { weekday: 'long', month: 'short', day: 'numeric' });
+
             // Store data for the confirm button
             currentBooking = { date, slot, btnElement };
 
             // Update modal text
-            document.getElementById('modalDetailText').innerHTML = `You are booking <strong>${label}</strong> on <strong>${dateStr}</strong>.`;
+            document.getElementById('modalDetailText').innerHTML = t.modalBookingText(label, dateStr);
 
             // Show Modal with Animation
             const modal = document.getElementById('bookingModal');
@@ -168,7 +271,7 @@
         async function executeBooking() {
             if (!currentBooking) return;
             const { date, slot } = currentBooking;
-            
+
             try {
                 const response = await fetch('/book_appointment', {
                     method: 'POST',
@@ -178,7 +281,7 @@
 
                 if (response.ok) {
                     closeModal(); // Hide modal on success
-                    await fetchAvailability(); 
+                    await fetchAvailability();
                     await fetchUserAppointments();
                 } else {
                     const result = await response.json();
@@ -199,4 +302,5 @@
         fetchUserAppointments();
     </script>
 </body>
+
 </html>
