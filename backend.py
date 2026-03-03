@@ -142,11 +142,12 @@ def get_availability():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        # Only fetch slots that are NOT yet booked
+        # Only fetch slots that are NOT yet booked and are in the future
         cursor.execute("""
             SELECT available_date, time_slot 
             FROM availability 
-            WHERE available_date >= CURDATE() AND is_booked = 0 
+            WHERE is_booked = 0
+              AND (available_date > CURDATE() OR (available_date = CURDATE() AND CAST(SUBSTRING(time_slot, 4, 2) AS UNSIGNED) > HOUR(CURTIME())))
             ORDER BY available_date, time_slot
         """)
         rows = cursor.fetchall()
@@ -177,6 +178,7 @@ def get_admin_bookings():
             JOIN users u ON app.customer_id = u.user_id
             JOIN availability a ON app.availability_id = a.availability_id
             WHERE a.user_id = %s
+              AND (a.available_date > CURDATE() OR (a.available_date = CURDATE() AND CAST(SUBSTRING(a.time_slot, 4, 2) AS UNSIGNED) > HOUR(CURTIME())))
             ORDER BY a.available_date ASC, a.time_slot ASC;
         """
         cursor.execute(query, (current_admin_id,))
@@ -253,6 +255,7 @@ def get_user_appointments():
             FROM appointments app
             JOIN availability a ON app.availability_id = a.availability_id
             WHERE app.customer_id = %s
+              AND (a.available_date > CURDATE() OR (a.available_date = CURDATE() AND CAST(SUBSTRING(a.time_slot, 4, 2) AS UNSIGNED) > HOUR(CURTIME())))
             ORDER BY a.available_date, a.time_slot
         """
         cursor.execute(query, (user_id,))
@@ -268,6 +271,30 @@ def get_user_appointments():
         cursor.close()
         conn.close()
     
+
+@app.route('/get_admin_availability', methods=['GET'])
+@jwt_required()
+def get_admin_availability():
+    """Fetches all availability (booked and unbooked) for the admin."""
+    current_admin_id = get_jwt_identity()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT available_date, time_slot 
+            FROM availability 
+            WHERE user_id = %s
+            ORDER BY available_date, time_slot
+        """, (current_admin_id,))
+        rows = cursor.fetchall()
+        for row in rows:
+            row['available_date'] = row['available_date'].strftime('%Y-%m-%d')
+        return jsonify(rows), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == '__main__':
 
